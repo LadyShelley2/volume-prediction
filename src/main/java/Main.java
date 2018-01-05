@@ -10,7 +10,10 @@ public class Main {
     }
 }
 
-
+/**
+ * 数据格式说明：路网中所有路段每个时间片存入一个文件中
+ * 字段：RoadId,Date,Time,SegmentId,Direction,Speed,Volume(relative)
+ */
 class DataPicker {
     private String base_url = "E:\\data\\";
 
