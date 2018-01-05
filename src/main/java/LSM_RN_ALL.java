@@ -131,17 +131,6 @@ public class LSM_RN_ALL {
        return A.mul(numerator.div(denominator));
     }
 
-//    private DoubleMatrix getHadamardProduct(DoubleMatrix a, DoubleMatrix b) {
-//        int m = a.length, n = a.getRow(0).length;
-//        DoubleMatrix res = new DoubleMatrix(m, n);
-//        for (int i = 0; i < m; i++) {
-//            for (int j = 0; j < n; j++) {
-//                res.put(i, j, a.get(i, j) * b.get(i, j));
-//            }
-//        }
-//        return res;
-//    }
-
     private double getTrace(DoubleMatrix matrix) {
         double res = 0.0;
         for (int i = 0; i < matrix.length; i++)
@@ -150,11 +139,12 @@ public class LSM_RN_ALL {
     }
 
     public static void main(String[] args){
-        DoubleMatrix U = new DoubleMatrix(new double[][]{{16,16},{16,16}});
-//        DoubleMatrix E = DoubleMatrix.zeros(2,2);
-//        System.out.print(U.transpose().mmul(U));
-        System.out.print(MatrixFunctions.pow(U,0.25));
-        System.out.print(MatrixFunctions.powi(U,0.25));
+        DoubleMatrix U = new DoubleMatrix(new double[][]{{1,6},{6,1}});
+        DoubleMatrix E = new DoubleMatrix(new double[][]{{1,2},{3,4}});
+        System.out.println(U.transpose().mmul(E));
+        System.out.println(U.transpose().mul(E));
+        System.out.println(MatrixFunctions.pow(U,0.25));
+        System.out.println(MatrixFunctions.powi(U,0.25));
 //        E.add(U.transpose().mmul(U));
     }
 }
