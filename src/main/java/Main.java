@@ -5,5 +5,6 @@ public class Main {
         DataPicker dp =new DataPicker();
         List<double[][]> snapshots = dp.getSnapshots(true);
 
+
     }
 }

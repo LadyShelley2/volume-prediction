@@ -54,6 +54,14 @@ class DataPicker {
 
     }
 
+    public double[][] getL(){
+        double[][] res = new double[totalCount][totalCount];
+        for(int i=0;i<totalCount-1;i++)
+            res[i][i+1]=1;
+        return res;
+    }
+
+
     public List<double[][]> getSnapshots(boolean output){
         generateSnapshots(output);
         return this.snapshots;
