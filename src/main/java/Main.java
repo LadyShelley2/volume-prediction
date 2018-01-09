@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class Main {
+
     public static void main(String[] args) {
         DataPicker dp =new DataPicker();
 
@@ -24,6 +25,10 @@ public class Main {
 
         System.out.println("MAPE 为：" + mape);
         System.out.println("RMSE 为：" + rmse);
+
+    }
+
+    public void permutat(double[][] matrix){
 
     }
 }

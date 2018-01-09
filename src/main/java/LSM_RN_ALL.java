@@ -13,7 +13,7 @@ public class LSM_RN_ALL {
     private DoubleMatrix L;
     private int n;
 
-    private static int K=20;
+    private static int K=5;
     private static double LAMBDA = Math.pow(2,3);
     private static double GAMMA = Math.pow(2,-5);
     private static double THRESHOLD= 100;
@@ -84,8 +84,8 @@ public class LSM_RN_ALL {
 
         double res = 0.0;
         for (int t = 0; t < T; t++) {
-            res += Y.get(t).mul(G.get(t).sub(U.get(t).mul(B).mul(U.get(t).transpose()))).norm2();
-            res += LAMBDA * getTrace(U.get(t).mmul(L).mmul(U.get(t).transpose()));
+            res += Y.get(t).mul(G.get(t).sub(U.get(t).mmul(B).mmul(U.get(t).transpose()))).norm2();
+            res += LAMBDA * getTrace(U.get(t).transpose().mmul(L).mmul(U.get(t)));
         }
         for (int t = 1; t < T; t++) {
             res += GAMMA * U.get(t).sub(U.get(t - 1).mmul(A)).norm2();
@@ -132,8 +132,8 @@ public class LSM_RN_ALL {
         DoubleMatrix denominator = DoubleMatrix.zeros(K,K);
 
         for(int t=0;t<T;t++){
-            numerator.add(U.get(t).mmul(Y.get(t).mul(G.get(t))).mul(U.get(t).transpose()));
-            denominator.add(U.get(t).mmul(Y.get(t).mul(U.get(t).mmul(B).mmul(U.get(t).transpose()))));
+            numerator.add(U.get(t).transpose().mmul(Y.get(t).mul(G.get(t))).mmul(U.get(t)));
+            denominator.add(U.get(t).transpose().mmul(Y.get(t).mul(U.get(t).mmul(B).mmul(U.get(t).transpose()))).mmul(U.get(t)));
         }
         return B.mul(numerator.div(denominator));
     }
@@ -189,7 +189,7 @@ public class LSM_RN_ALL {
 
     private double getTrace(DoubleMatrix matrix) {
         double res = 0.0;
-        for (int i = 0; i < matrix.length; i++)
+        for (int i = 0; i < matrix.rows; i++)
             res += matrix.get(i, i);
         return res;
     }

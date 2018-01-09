@@ -33,7 +33,7 @@ class DataPicker {
 
     private int timeSlot = 5 * 60;
     private int beginDate = 20161001, endDate = 20161002;
-    private String beginTimeString = " 00:05:00", endTimeString = " 24:00:00" /*endTimeString=" 24:00:00"*/;
+    private String beginTimeString = " 08:05:00", endTimeString = " 09:00:00" /*endTimeString=" 24:00:00"*/;
     private DateFormat df; // date format of txt datas;
     private DateFormat dfFilename; // generate name of output file by time
 
