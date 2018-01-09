@@ -54,13 +54,20 @@ class DataPicker {
 
     }
 
-    public double[][] getL(){
+    public double[][] getW(){
         double[][] res = new double[totalCount][totalCount];
         for(int i=0;i<totalCount-1;i++)
             res[i][i+1]=1;
         return res;
     }
 
+    public double[][] getD(double[][] W){
+        double[][] res = new double[W.length][W[0].length];
+        for(int i=0;i<W.length;i++){
+            res[i][i]=Arrays.stream(W[i]).reduce(0,(a,b)->a+b);
+        }
+        return res;
+    }
 
     public List<double[][]> getSnapshots(boolean output){
         generateSnapshots(output);

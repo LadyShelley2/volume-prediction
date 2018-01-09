@@ -13,10 +13,15 @@ public class LSM_RN_ALL {
     private DoubleMatrix L;
     private int n;
 
-    private static int k=10;
-    private static double labmda = 0.4;
-    private static double gamma = 0.2;
-    private static double threshold = 1;
+    private static int K=20;
+    private static double LAMBDA = Math.pow(2,3);
+    private static double GAMMA = Math.pow(2,-5);
+    private static double THRESHOLD= 100;
+    private static int MAX_ITERATION = 1000;
+
+    public List<DoubleMatrix> trainedU;
+    public DoubleMatrix trainedB;
+    public DoubleMatrix trainedA;
 
     LSM_RN_ALL(List<double[][]> snapshots, double[][] W, double[][] D) {
 
@@ -28,11 +33,11 @@ public class LSM_RN_ALL {
         n = snapshots.get(0).length;
     }
 
-    public List<DoubleMatrix> getYMatrixs(List<DoubleMatrix> G) {
+    public static List<DoubleMatrix> getYMatrixs(List<DoubleMatrix> G) {
         return G.stream().map(s -> getYMatrix(s)).collect(Collectors.toList());
     }
 
-    private DoubleMatrix getYMatrix(DoubleMatrix G) {
+    public static DoubleMatrix getYMatrix(DoubleMatrix G) {
         return new DoubleMatrix(Arrays.stream(G.toArray2()).map(g ->
                 Arrays.stream(g).map(e -> e > 0 ? 1 : 0).toArray()
         ).toArray(double[][]::new));
@@ -44,19 +49,31 @@ public class LSM_RN_ALL {
         List<DoubleMatrix> U = new ArrayList<>();
         int T = Y.size();
         for (int t = 0; t < T; t++)
-            U.add(DoubleMatrix.rand(n, k));
+            U.add(DoubleMatrix.rand(n, K));
 
-        DoubleMatrix A = DoubleMatrix.rand(k, k);
-        DoubleMatrix B = DoubleMatrix.rand(k, k);
+        DoubleMatrix A = DoubleMatrix.rand(K, K);
+        DoubleMatrix B = DoubleMatrix.rand(K, K);
 
         double goalValue = Double.MAX_VALUE;
-        while (goalValue > threshold) {
+        double preGoalValue = 0.0;
+        int counter = 0;
+
+        while (Math.abs(goalValue-preGoalValue) > THRESHOLD && counter++ < MAX_ITERATION) {
+
+            System.out.println("第"+counter+"次迭代, 目标值 为：" + goalValue);
             U = caculateU(B,W,D,A,U,G,Y);
             B = caculateB(B,A,G,Y,U);
             A = caculateA(U,A);
+
+            preGoalValue = goalValue;
             goalValue=getGoal(Y,G,U,B,L,A);
+
+
         }
 
+        this.trainedU = U;
+        this.trainedA = A;
+        this.trainedB = B;
     }
 
     private double getGoal(List<DoubleMatrix> Y,
@@ -68,10 +85,10 @@ public class LSM_RN_ALL {
         double res = 0.0;
         for (int t = 0; t < T; t++) {
             res += Y.get(t).mul(G.get(t).sub(U.get(t).mul(B).mul(U.get(t).transpose()))).norm2();
-            res += labmda * getTrace(U.get(t).mmul(L).mmul(U.get(t).transpose()));
+            res += LAMBDA * getTrace(U.get(t).mmul(L).mmul(U.get(t).transpose()));
         }
         for (int t = 1; t < T; t++) {
-            res += gamma * U.get(t).sub(U.get(t - 1).mmul(A)).norm2();
+            res += GAMMA * U.get(t).sub(U.get(t - 1).mmul(A)).norm2();
         }
         return res;
     }
@@ -92,26 +109,27 @@ public class LSM_RN_ALL {
 
             numerator = ((Y.get(t).mul(G.get(t))).mmul(U.get(t).mmul(B)))
                     .add((Y.get(t).transpose().mul(G.get(t).transpose())).mmul(U.get(t)).mmul(B))
-                    .add(W.mmul(U.get(t)).mmul(labmda))
-                    .add((U.get(t-1).mmul(A).add(U.get(t+1).mmul(A.transpose()))).mmul(gamma));
+                    .add(W.mmul(U.get(t)).mmul(LAMBDA))
+                    .add((U.get(t-1).mmul(A).add(U.get(t+1).mmul(A.transpose()))).mmul(GAMMA));
 
             denominator = (Y.get(t).mul(U.get(t).mmul(B).mmul(U.get(t).transpose())))
                     .mmul(U.get(t).mmul(B.transpose()).add(U.get(t).mmul(B)))
-                    .add(D.mmul(U.get(t)).mmul(labmda))
-                    .add(U.get(t).add(U.get(t).mmul(A).mmul(A.transpose())).mmul(gamma));
+                    .add(D.mmul(U.get(t)).mmul(LAMBDA))
+                    .add(U.get(t).add(U.get(t).mmul(A).mmul(A.transpose())).mmul(GAMMA));
 
             U.set(t,U.get(t).mul(MatrixFunctions.pow(numerator.div(denominator),0.25)));
         }
         return  U;
     }
+
     private DoubleMatrix caculateB(DoubleMatrix B,
                                    DoubleMatrix A,
                                    List<DoubleMatrix> G,
                                    List<DoubleMatrix> Y,
                                    List<DoubleMatrix> U) {
         int T = U.size();
-        DoubleMatrix numerator = DoubleMatrix.zeros(k,k);
-        DoubleMatrix denominator = DoubleMatrix.zeros(k,k);
+        DoubleMatrix numerator = DoubleMatrix.zeros(K,K);
+        DoubleMatrix denominator = DoubleMatrix.zeros(K,K);
 
         for(int t=0;t<T;t++){
             numerator.add(U.get(t).mmul(Y.get(t).mul(G.get(t))).mul(U.get(t).transpose()));
@@ -122,8 +140,8 @@ public class LSM_RN_ALL {
 
     private DoubleMatrix caculateA(List<DoubleMatrix> U, DoubleMatrix A) {
        int T = U.size();
-       DoubleMatrix numerator = DoubleMatrix.zeros(k,k);
-       DoubleMatrix denominator = DoubleMatrix.zeros(k,k);
+       DoubleMatrix numerator = DoubleMatrix.zeros(K,K);
+       DoubleMatrix denominator = DoubleMatrix.zeros(K,K);
        for(int t=2;t<T;t++){
            numerator.add(U.get(t-1).transpose().mmul(U.get(t)));
            denominator.add(U.get(t-1).transpose().mmul(U.get(t-1)).mmul(A));
@@ -132,11 +150,28 @@ public class LSM_RN_ALL {
        return A.mul(numerator.div(denominator));
     }
 
-    public DoubleMatrix completion(DoubleMatrix U, DoubleMatrix B) {
-        return U.mmul(B).mmul(U.transpose());
+    public List<DoubleMatrix> completion(List<DoubleMatrix> U, DoubleMatrix B) {
+        return U.stream().map(u->u.mmul(B).mmul(u.transpose())).collect(Collectors.toList());
     }
+
     public DoubleMatrix prediction(DoubleMatrix B, DoubleMatrix A, DoubleMatrix U, int h){
         return U.mmul(MatrixFunctions.pow(A,h)).mmul(B).mmul(U.mmul(MatrixFunctions.pow(A,h)).transpose());
+    }
+
+    public double getListMAPE(List<DoubleMatrix> base, List<DoubleMatrix> estimate){
+        int length = base.size();
+        double res = 0.0;
+        for(int i=0;i<length;i++)
+            res+=getMAPE(base.get(i),estimate.get(i));
+        return res;
+    }
+
+    public  double getListRMSE(List<DoubleMatrix> base, List<DoubleMatrix> estimate){
+        int length = base.size();
+        double res =0.0;
+        for(int i=0;i<length;i++)
+            res+=getRMSE(base.get(i),estimate.get(i));
+        return res;
     }
 
     public double getMAPE(DoubleMatrix base, DoubleMatrix estimate){
@@ -147,6 +182,7 @@ public class LSM_RN_ALL {
         System.out.println(MatrixFunctions.abs(base.sub(estimate)));
         return MatrixFunctions.abs(base.sub(estimate)).divi(base).sum()/base.length;
     }
+
     public double getRMSE(DoubleMatrix base, DoubleMatrix estimate){
         return MatrixFunctions.sqrt(MatrixFunctions.pow(base.sub(estimate),2).sum()/base.length);
     }
@@ -159,11 +195,15 @@ public class LSM_RN_ALL {
     }
 
     public static void main(String[] args){
-        DoubleMatrix U = new DoubleMatrix(new double[][]{{112.3,108.4,148.9,117.4}});
+        DoubleMatrix U = new DoubleMatrix(new double[][]{{112.3,108.4,148.9,117.4},{112.3,0,0,0}});
+
         DoubleMatrix E = new DoubleMatrix(new double[][]{{124.7,103.7,116.6,78.5}});
 
+        System.out.println(LSM_RN_ALL.getYMatrix(U));
+
+        System.out.println(U);
 //        System.out.println(LSM_RN_ALL.getMAPE(U,E));
 //        System.out.println(LSM_RN_ALL.getRMSE(U,E));
-        E.add(U.transpose().mmul(U));
+//        E.add(U.transpose().mmul(U));
     }
 }
