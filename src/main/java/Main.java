@@ -11,9 +11,6 @@ public class Main {
         double[][] matrixW = dp.getW();
         double[][] matrixD = dp.getD(matrixW);
 
-        //test
-
-
         LSM_RN_ALL lsmRnAll = new LSM_RN_ALL(snapshots,matrixW,matrixD);
         lsmRnAll.globalLearning();
 
