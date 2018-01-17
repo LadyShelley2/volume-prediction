@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
  * 字段：RoadId,Date,Time,SegmentId,Direction,Speed,Volume(relative)
  */
 class DataPicker {
-    private String base_url = "E:\\data\\";
+    private String base_url = "D:\\data\\";
 
     private List<String> nodes = new ArrayList<String>();
     private double[][] weights;
@@ -33,7 +33,7 @@ class DataPicker {
 
     private int timeSlot = 5 * 60;
     private int beginDate = 20161001, endDate = 20161002;
-    private String beginTimeString = " 00:05:00", endTimeString = " 24:00:00" /*endTimeString=" 24:00:00"*/;
+    private String beginTimeString = " 08:05:00", endTimeString = " 09:00:00" /*endTimeString=" 24:00:00"*/;
     private DateFormat df; // date format of txt datas;
     private DateFormat dfFilename; // generate name of output file by time
 

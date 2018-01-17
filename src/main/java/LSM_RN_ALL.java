@@ -18,6 +18,7 @@ public class LSM_RN_ALL {
     private static double GAMMA = Math.pow(2,-5);
     private static double THRESHOLD= 100;
     private static int MAX_ITERATION = 1000;
+    private static double EPSILON = 0.2;
 
     public List<DoubleMatrix> trainedU;
     public DoubleMatrix trainedB;
@@ -84,8 +85,8 @@ public class LSM_RN_ALL {
 
         double res = 0.0;
         for (int t = 0; t < T; t++) {
-            res += Y.get(t).mul(G.get(t).sub(U.get(t).mul(B).mul(U.get(t).transpose()))).norm2();
-            res += LAMBDA * getTrace(U.get(t).mmul(L).mmul(U.get(t).transpose()));
+            res += Y.get(t).mul(G.get(t).sub(U.get(t).mmul(B).mmul(U.get(t).transpose()))).norm2();
+            res += LAMBDA * getTrace(U.get(t).transpose().mmul(L).mmul(U.get(t)));
         }
         for (int t = 1; t < T; t++) {
             res += GAMMA * U.get(t).sub(U.get(t - 1).mmul(A)).norm2();
@@ -107,7 +108,7 @@ public class LSM_RN_ALL {
         //公式中涉及对t-1和t+1元素的访问，因此t的范围设定为1~T-2
         for(int t=1;t<T-1;t++){
 
-            numerator = ((Y.get(t).mul(G.get(t))).mmul(U.get(t).mmul(B)))
+            numerator = ((Y.get(t).mul(G.get(t))).mmul(U.get(t)).mmul(B).transpose())
                     .add((Y.get(t).transpose().mul(G.get(t).transpose())).mmul(U.get(t)).mmul(B))
                     .add(W.mmul(U.get(t)).mmul(LAMBDA))
                     .add((U.get(t-1).mmul(A).add(U.get(t+1).mmul(A.transpose()))).mmul(GAMMA));
@@ -115,9 +116,10 @@ public class LSM_RN_ALL {
             denominator = (Y.get(t).mul(U.get(t).mmul(B).mmul(U.get(t).transpose())))
                     .mmul(U.get(t).mmul(B.transpose()).add(U.get(t).mmul(B)))
                     .add(D.mmul(U.get(t)).mmul(LAMBDA))
-                    .add(U.get(t).add(U.get(t).mmul(A).mmul(A.transpose())).mmul(GAMMA));
+                    .add(U.get(t).add(U.get(t).mmul(A).mmul(A.transpose())).mmul(GAMMA))
+                    .add(DoubleMatrix.ones(n,K).mul(EPSILON));
 
-            U.set(t,U.get(t).mul(MatrixFunctions.pow(numerator.div(denominator),0.25)));
+            U.set(t,U.get(t).mul(MatrixFunctions.powi(numerator.div(denominator),0.25)));
         }
         return  U;
     }
@@ -132,9 +134,12 @@ public class LSM_RN_ALL {
         DoubleMatrix denominator = DoubleMatrix.zeros(K,K);
 
         for(int t=0;t<T;t++){
-            numerator.add(U.get(t).mmul(Y.get(t).mul(G.get(t))).mul(U.get(t).transpose()));
-            denominator.add(U.get(t).mmul(Y.get(t).mul(U.get(t).mmul(B).mmul(U.get(t).transpose()))));
+            numerator.add(U.get(t).transpose().mmul(Y.get(t).mul(G.get(t))).mmul(U.get(t)));
+            denominator.add(U.get(t).transpose().mmul(Y.get(t).mul(U.get(t).mmul(B).mmul(U.get(t).transpose()))).mmul(U.get(t)));
         }
+
+
+        denominator.add(DoubleMatrix.ones(K,K));
         return B.mul(numerator.div(denominator));
     }
 
@@ -146,6 +151,7 @@ public class LSM_RN_ALL {
            numerator.add(U.get(t-1).transpose().mmul(U.get(t)));
            denominator.add(U.get(t-1).transpose().mmul(U.get(t-1)).mmul(A));
        }
+       denominator.add(DoubleMatrix.ones(K,K));
 
        return A.mul(numerator.div(denominator));
     }
@@ -176,10 +182,10 @@ public class LSM_RN_ALL {
 
     public double getMAPE(DoubleMatrix base, DoubleMatrix estimate){
 
-        System.out.println(base);
-        System.out.println(estimate);
-        System.out.println(base.sub(estimate));
-        System.out.println(MatrixFunctions.abs(base.sub(estimate)));
+//        System.out.println(base);
+//        System.out.println(estimate);
+//        System.out.println(base.sub(estimate));
+//        System.out.println(MatrixFunctions.abs(base.sub(estimate)));
         return MatrixFunctions.abs(base.sub(estimate)).divi(base).sum()/base.length;
     }
 
@@ -189,7 +195,7 @@ public class LSM_RN_ALL {
 
     private double getTrace(DoubleMatrix matrix) {
         double res = 0.0;
-        for (int i = 0; i < matrix.length; i++)
+        for (int i = 0; i < matrix.rows; i++)
             res += matrix.get(i, i);
         return res;
     }
