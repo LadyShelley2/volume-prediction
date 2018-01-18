@@ -33,7 +33,7 @@ class DataPicker {
 
     private int timeSlot = 5 * 60;
     private int beginDate = 20161001, endDate = 20161002;
-    private String beginTimeString = " 08:05:00", endTimeString = " 09:00:00" /*endTimeString=" 24:00:00"*/;
+    private String beginTimeString = " 08:35:00", endTimeString = " 09:00:00" /*endTimeString=" 24:00:00"*/;
     private DateFormat df; // date format of txt datas;
     private DateFormat dfFilename; // generate name of output file by time
 
@@ -111,6 +111,10 @@ class DataPicker {
         String line = fin.readLine();
         System.out.println("Reading");
 
+        while(line!=null&&!line.contains(time)){
+            line = fin.readLine();
+        }
+
         while(line!=null&&line.contains(time)){
             String[] strs = line.split("\t");
             int index = findIndex(strs[0],strs[2]);
@@ -128,7 +132,7 @@ class DataPicker {
      * @param graph
      * @param fout
      */
-    private void output(double[][] graph, FileUtil fout) {
+    public void output(double[][] graph, FileUtil fout) {
         int rowCount = graph.length;
         int columnCount = graph[0].length;
 

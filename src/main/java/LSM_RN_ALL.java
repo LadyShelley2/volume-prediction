@@ -16,7 +16,7 @@ public class LSM_RN_ALL {
     private static int K=20;
     private static double LAMBDA = Math.pow(2,3);
     private static double GAMMA = Math.pow(2,-5);
-    private static double THRESHOLD= 100;
+    private static double THRESHOLD= 1;
     private static int MAX_ITERATION = 1000;
     private static double EPSILON = 0.2;
 
@@ -60,11 +60,20 @@ public class LSM_RN_ALL {
         int counter = 0;
 
         while (Math.abs(goalValue-preGoalValue) > THRESHOLD && counter++ < MAX_ITERATION) {
+            if(counter>13)
+                System.out.println("iteration 13");
 
             System.out.println("第"+counter+"次迭代, 目标值 为：" + goalValue);
             U = caculateU(B,W,D,A,U,G,Y);
             B = caculateB(B,A,G,Y,U);
             A = caculateA(U,A);
+
+            FileUtil foutU = new FileUtil("D:\\data\\U"+counter+".txt");
+            new DataPicker().output(U.get(2).toArray2(),foutU);
+            FileUtil foutB = new FileUtil("D:\\data\\B"+counter+".txt");
+            new DataPicker().output(B.toArray2(),foutB);
+            FileUtil foutA = new FileUtil("D:\\data\\A"+counter+".txt");
+            new DataPicker().output(A.toArray2(),foutA);
 
             preGoalValue = goalValue;
             goalValue=getGoal(Y,G,U,B,L,A);
@@ -134,12 +143,15 @@ public class LSM_RN_ALL {
         DoubleMatrix denominator = DoubleMatrix.zeros(K,K);
 
         for(int t=0;t<T;t++){
-            numerator.add(U.get(t).transpose().mmul(Y.get(t).mul(G.get(t))).mmul(U.get(t)));
-            denominator.add(U.get(t).transpose().mmul(Y.get(t).mul(U.get(t).mmul(B).mmul(U.get(t).transpose()))).mmul(U.get(t)));
+//            System.out.println("U's numerator sum: "+ U.get(t).transpose().mmul(Y.get(t).mul(G.get(t))).mmul(U.get(t)).sum());
+//            System.out.println("Y.get(t).sum(): "+Y.get(t).sum());
+//            System.out.println("G.get(t).sum(): "+G.get(t).sum());
+//            System.out.println("Y.get(t).mul(G.get(t)): "+ Y.get(t).mul(G.get(t)).sum());
+            numerator.addi(U.get(t).transpose().mmul(Y.get(t).mul(G.get(t))).mmul(U.get(t)));
+            denominator.addi(U.get(t).transpose().mmul(Y.get(t).mul(U.get(t).mmul(B).mmul(U.get(t).transpose()))).mmul(U.get(t)));
         }
 
-
-        denominator.add(DoubleMatrix.ones(K,K));
+        denominator.addi(DoubleMatrix.ones(K,K).mmul(EPSILON));
         return B.mul(numerator.div(denominator));
     }
 
@@ -148,17 +160,26 @@ public class LSM_RN_ALL {
        DoubleMatrix numerator = DoubleMatrix.zeros(K,K);
        DoubleMatrix denominator = DoubleMatrix.zeros(K,K);
        for(int t=2;t<T;t++){
-           numerator.add(U.get(t-1).transpose().mmul(U.get(t)));
-           denominator.add(U.get(t-1).transpose().mmul(U.get(t-1)).mmul(A));
+           numerator.addi(U.get(t-1).transpose().mmul(U.get(t)));
+           denominator.addi(U.get(t-1).transpose().mmul(U.get(t-1)).mmul(A));
        }
-       denominator.add(DoubleMatrix.ones(K,K));
+       denominator.addi(DoubleMatrix.ones(K,K).mmul(EPSILON));
 
        return A.mul(numerator.div(denominator));
     }
 
     public List<DoubleMatrix> completion(List<DoubleMatrix> U, DoubleMatrix B) {
+
+        //record
+        FileUtil fout = new FileUtil("D:\\data\\"+"U.txt");
+        FileUtil fout2 = new FileUtil("D:\\data\\"+"B.txt");
+        new DataPicker().output(U.get(0).toArray2(),fout);
+        new DataPicker().output(B.toArray2(),fout2);
+
         return U.stream().map(u->u.mmul(B).mmul(u.transpose())).collect(Collectors.toList());
     }
+
+
 
     public DoubleMatrix prediction(DoubleMatrix B, DoubleMatrix A, DoubleMatrix U, int h){
         return U.mmul(MatrixFunctions.pow(A,h)).mmul(B).mmul(U.mmul(MatrixFunctions.pow(A,h)).transpose());
@@ -182,14 +203,15 @@ public class LSM_RN_ALL {
 
     public double getMAPE(DoubleMatrix base, DoubleMatrix estimate){
 
-//        System.out.println(base);
-//        System.out.println(estimate);
 //        System.out.println(base.sub(estimate));
-//        System.out.println(MatrixFunctions.abs(base.sub(estimate)));
-        return MatrixFunctions.abs(base.sub(estimate)).divi(base).sum()/base.length;
+        System.out.println(MatrixFunctions.abs(base.sub(estimate)).sum());
+        System.out.println(MatrixFunctions.abs(base.sub(estimate)).divi(base.add(DoubleMatrix.ones(n,n).mmul(EPSILON))).sum());
+        return MatrixFunctions.abs(base.sub(estimate)).divi(base.add(DoubleMatrix.ones(n,n).mmul(EPSILON))).sum()/base.length;
     }
 
     public double getRMSE(DoubleMatrix base, DoubleMatrix estimate){
+//        System.out.println(base.sub(estimate));
+        System.out.println(MatrixFunctions.pow(base.sub(estimate),2).sum());
         return MatrixFunctions.sqrt(MatrixFunctions.pow(base.sub(estimate),2).sum()/base.length);
     }
 
