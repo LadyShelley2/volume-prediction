@@ -1,3 +1,5 @@
+package Test;
+
 import java.sql.*;
 
 public class MySQLDemo {

@@ -1,3 +1,6 @@
+package Algrithom;
+
+import Util.FileUtil;
 import org.jblas.DoubleMatrix;
 
 import java.util.List;
@@ -37,8 +40,8 @@ public class Main {
 
         System.out.println(LSM_RN_ALL.getYMatrixs(baseSnapshots));
 
-        System.out.println("MAPE 为：" + mape);
         System.out.println("RMSE 为：" + rmse);
+        System.out.println("MAPE 为：" + mape);
 
     }
 

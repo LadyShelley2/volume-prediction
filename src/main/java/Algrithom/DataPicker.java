@@ -1,3 +1,8 @@
+package Algrithom;
+
+import Util.FileUtil;
+import Util.TimeFormat;
+
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -101,7 +106,6 @@ class DataPicker {
                     FileUtil fout = new FileUtil(base_url + dfFilename.format(new Date(t*1000)) + "out.txt");
                     output(snapshot, fout);
                 }
-
             }
             fin.close();
         }
