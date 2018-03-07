@@ -12,8 +12,8 @@ import java.util.stream.Collectors;
  * 数据格式说明：路网中所有路段每个时间片存入一个文件中
  * 字段：RoadId,Date,Time,SegmentId,Direction,Speed,Volume(relative)
  */
-class DataPicker {
-    private String base_url = "D:\\data\\";
+public class DataPicker {
+    private String base_url = "D:\\data\\test_20170910\\";
 
     private List<String> nodes = new ArrayList<String>();
     private double[][] weights;
@@ -37,21 +37,24 @@ class DataPicker {
     private List<double[][]> snapshots;
 
     private int timeSlot = 5 * 60;
-    private int beginDate = 20161001, endDate = 20161002;
-    private String beginTimeString = " 08:35:00", endTimeString = " 09:00:00" /*endTimeString=" 24:00:00"*/;
+    private int beginDate = 20170910, endDate = 20170911;
+    private int beginSegment = 100, endSegment = 110;
+    private boolean partSegment = false;
+    private String beginTimeString = " 00:05:00", endTimeString = " 24:00:00" /*endTimeString=" 24:00:00"*/;
     private DateFormat df; // date format of txt datas;
     private DateFormat dfFilename; // generate name of output file by time
 
 
 
-    DataPicker() {
+    public DataPicker() {
 
         // put road names and segment counts in two lists;
         roadsNames = segments.entrySet().stream().map(e -> e.getKey()).collect(Collectors.toList());
         roadsSegmentCounts = segments.entrySet().stream().map(e -> e.getValue()).collect(Collectors.toList());
 
         totalCount = roadsSegmentCounts.stream().reduce(0, (acc, a) -> acc + a);
-
+        if(partSegment)
+            totalCount=endSegment-beginSegment+1;
         df = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
         dfFilename = new SimpleDateFormat("yyyyMMddHHmm");
 
@@ -118,12 +121,24 @@ class DataPicker {
         while(line!=null&&!line.contains(time)){
             line = fin.readLine();
         }
+        while(line!=null&&!line.contains(String.valueOf(beginSegment))){
+            line = fin.readLine();
+        }
 
         while(line!=null&&line.contains(time)){
             String[] strs = line.split("\t");
+            if(Integer.parseInt(strs[2])>=endSegment) // 如果只选择一部分路段构成网络
+                break;
             int index = findIndex(strs[0],strs[2]);
             if(index!=-1){
-                graph[index][index-1] = Integer.parseInt(strs[5]);//strs[5]:relative volume;
+                if(index<0)
+                    System.out.println("Pause....");
+                if(Integer.parseInt(strs[3])==0) {
+                    graph[index][index-1] = Integer.parseInt(strs[5]);
+                }/*逆序*/
+                else{
+                    graph[index-1][index] = Integer.parseInt(strs[5]);
+                }//strs[5]:relative volume;
             }
             line = fin.readLine();
         }
@@ -160,6 +175,8 @@ class DataPicker {
      * @return node index. insert weight in G[index][index-1]
      */
     private int findIndex(String roadId, String segmentId) {
+        if(partSegment)
+            return Integer.parseInt(segmentId)-beginSegment+1;
         int roadIndex = roadsNames.indexOf(roadId);
         // if segmentId is larger than its segment count, invalid data;
         if (Integer.parseInt(segmentId) > roadsSegmentCounts.get(roadIndex))
