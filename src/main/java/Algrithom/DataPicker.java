@@ -47,7 +47,6 @@ public class DataPicker {
 
 
     public DataPicker() {
-
         // put road names and segment counts in two lists;
         roadsNames = segments.entrySet().stream().map(e -> e.getKey()).collect(Collectors.toList());
         roadsSegmentCounts = segments.entrySet().stream().map(e -> e.getValue()).collect(Collectors.toList());
@@ -121,18 +120,21 @@ public class DataPicker {
         while(line!=null&&!line.contains(time)){
             line = fin.readLine();
         }
-        while(line!=null&&!line.contains(String.valueOf(beginSegment))){
-            line = fin.readLine();
+        if(partSegment){
+            while(line!=null&&!line.contains(String.valueOf(beginSegment))){
+                line = fin.readLine();
+            }
         }
 
         while(line!=null&&line.contains(time)){
             String[] strs = line.split("\t");
-            if(Integer.parseInt(strs[2])>=endSegment) // 如果只选择一部分路段构成网络
-                break;
+            if(partSegment){
+                if(Integer.parseInt(strs[2])>=endSegment) // 如果只选择一部分路段构成网络
+                    break;
+            }
+
             int index = findIndex(strs[0],strs[2]);
             if(index!=-1){
-                if(index<0)
-                    System.out.println("Pause....");
                 if(Integer.parseInt(strs[3])==0) {
                     graph[index][index-1] = Integer.parseInt(strs[5]);
                 }/*逆序*/
