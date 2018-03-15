@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
  * 字段：RoadId,Date,Time,SegmentId,Direction,Speed,Volume(relative)
  */
 public class DataPicker {
-    private String base_url = "D:\\data\\test_20170910\\";
+    private String base_url = "D:\\data\\test_20170910_smooth\\";
 
     private List<String> nodes = new ArrayList<String>();
     private double[][] weights;
@@ -38,11 +38,12 @@ public class DataPicker {
 
     private int timeSlot = 5 * 60;
     private int beginDate = 20170910, endDate = 20170911;
-    private int beginSegment = 100, endSegment = 110;
+    private int beginSegment = 150, endSegment = 300;
     private boolean partSegment = false;
     private String beginTimeString = " 00:05:00", endTimeString = " 24:00:00" /*endTimeString=" 24:00:00"*/;
     private DateFormat df; // date format of txt datas;
     private DateFormat dfFilename; // generate name of output file by time
+    private int volumeIndex = 4;
 
 
 
@@ -136,10 +137,10 @@ public class DataPicker {
             int index = findIndex(strs[0],strs[2]);
             if(index!=-1){
                 if(Integer.parseInt(strs[3])==0) {
-                    graph[index][index-1] = Integer.parseInt(strs[5]);
+                    graph[index][index-1] = Double.parseDouble(strs[volumeIndex]);
                 }/*逆序*/
                 else{
-                    graph[index-1][index] = Integer.parseInt(strs[5]);
+                    graph[index-1][index] = Double.parseDouble(strs[volumeIndex]);
                 }//strs[5]:relative volume;
             }
             line = fin.readLine();
